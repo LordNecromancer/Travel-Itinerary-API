@@ -12,19 +12,23 @@ type RequestBody = {
   durationDays: number
 }
 
-// app.get('/', async (c) => {
-//   return c.text('Travel Itinerary API!');
-// });
+
 
 app.post('/', async (c) => {
   const body: RequestBody = await c.req.json()
   const jobId = uuidv4()
+  const LLMApiKey=c.env.OPENAI_API_KEY
+  const firestoreApiKey=c.env.FIREBASE_SERVICE_ACCOUNT
+
 
   try{
     console.log(c)
- // await setInitialFirestoreDoc(c, jobId, body.destination, body.durationDays)
+  await setInitialFirestoreDoc(firestoreApiKey, jobId, body.destination, body.durationDays)
 
-  handleAsyncJob(c, jobId, body.destination, body.durationDays)
+  //handleAsyncJob(LLMApiKey,firestoreApiKey, jobId, body.destination, body.durationDays)
+  c.executionCtx.waitUntil(
+      handleAsyncJob(LLMApiKey, firestoreApiKey, jobId, body.destination, body.durationDays)
+    );
 
   return c.json({ jobId }, 202)
   } catch (err) {
@@ -35,22 +39,22 @@ app.post('/', async (c) => {
 export default app
 
 // === ASYNC HANDLER ===
-async function handleAsyncJob(c, jobId: string, destination: string, durationDays: number) {
+async function handleAsyncJob(LLMApiKey,firestoreApiKey, jobId: string, destination: string, durationDays: number) {
   try {
         console.log(6)
 
-    const itinerary = await generateItinerary(c, destination, durationDays)
+    const itinerary = await generateItinerary(LLMApiKey, destination, durationDays)
     console.log(7)
     console.log(itinerary)
 
-    await updateFirestore(c, jobId, {
+    await updateFirestore(firestoreApiKey, jobId, {
       status: 'completed',
       completedAt: new Date(),
       itinerary,
       error: null,
     })
   } catch (err: any) {
-    await updateFirestore(c, jobId, {
+    await updateFirestore(firestoreApiKey, jobId, {
       status: 'failed',
       completedAt: new Date(),
       itinerary: [],
@@ -60,38 +64,89 @@ async function handleAsyncJob(c, jobId: string, destination: string, durationDay
 }
 
 // === LLM CALL ===
-async function generateItinerary(c, destination: string, durationDays: number) {
+async function generateItineraryGemini(c, destination: string, durationDays: number) {
   const prompt = `Create a structured travel itinerary in JSON format for ${durationDays} days in ${destination}. 
   Each day must have a theme and 3 activities (morning, afternoon, evening), with a description and location. 
   Return strictly the JSON that matches this schema: 
   [{"day": 1, "theme": "string", "activities": [{"time": "Morning", "description": "string", "location": "string"}]}]`
 
-  const apiKey = c.env.OPENAI_API_KEY
-  console.log(apiKey)
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  const apiKey = c.env.Gemini_API_KEY  
+  const endpoint = 'https://us-central1-aiplatform.googleapis.com/v1/projects/travel-itinerary-ab63a/locations/us-central1/publishers/google/models/text-bison-001:generateText'
+
+  const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: 'gpt-5',
-      messages: [{ role: 'user', content: prompt }],
+      prompt: {
+        text: prompt
+      },
       temperature: 0.7,
+      maxOutputTokens: 1024,
     }),
   })
-  console.log(response)
 
   const data = await response.json()
-  const text = data.choices[0].message.content
+  console.log(data)
+  const text = data?.candidates?.[0]?.output || ''
 
   return JSON.parse(text)
 }
+async function generateItinerary(apiKey, destination: string, durationDays: number) {
+  const prompt = `Create a structured travel itinerary in JSON format for ${durationDays} days in ${destination}. 
+  Each day must have a theme and 3 activities (morning, afternoon, evening), with a description and location. 
+  Return strictly the JSON that matches this schema: 
+  [{"day": 1, "theme": "string", "activities": [{"time": "Morning", "description": "string", "location": "string"}]}]`
+
+  
+   const API_ENDPOINT = 'https://api.openai.com/v1/chat/completions';
+   console.log(apiKey)
+
+  try {
+    const response =  await fetch(API_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o', 
+        messages: [{ role: 'user', content: prompt }],
+        //temperature: 0.7,
+      })
+    });
+    console.log("Win")
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`OpenAI API Error: ${response.status} - ${errorData.error.message}`);
+    }
+
+    const data = await response.json();
+    const rawText = data.choices[0].message.content.trim();
+
+    // Remove possible code fences before parsing
+    const cleanedText = rawText.replace(/^```json\s*/i, '').replace(/```$/, '');
+
+    // Parse to object
+    return JSON.parse(cleanedText);
+  } catch (error) {
+    console.error('Error fetching from OpenAI:', error);
+    return null;
+  }
+}
+
+
 
 // === FIRESTORE FUNCTIONS ===
-function getFirestore(c) {
+function getFirestore(firestoreApiKey) {
   console.log("Hey")
-  const key = JSON.parse(c.env.FIREBASE_SERVICE_ACCOUNT)
+    console.log(firestoreApiKey)
+
+  const key = JSON.parse(firestoreApiKey)
   console.log("HHey")
 
   const projectId = key.project_id
@@ -139,8 +194,8 @@ console.log(data);
   }
 }
 
-async function setInitialFirestoreDoc(c, jobId: string, destination: string, durationDays: number) {
-  const firestore = getFirestore(c)
+async function setInitialFirestoreDoc(firestoreApiKey, jobId: string, destination: string, durationDays: number) {
+  const firestore = getFirestore(firestoreApiKey)
     console.log(45)
 
   await firestore.writeDoc(jobId, {
@@ -155,13 +210,13 @@ async function setInitialFirestoreDoc(c, jobId: string, destination: string, dur
   console.log(5)
 }
 
-async function updateFirestore(c, jobId: string, update: {
+async function updateFirestore(firestoreApiKey, jobId: string, update: {
   status: string,
   completedAt: Date,
   itinerary: any[],
   error: string | null,
 }) {
-  const firestore = getFirestore(c)
+  const firestore = getFirestore(firestoreApiKey)
   await firestore.writeDoc(jobId, update)
 }
 
