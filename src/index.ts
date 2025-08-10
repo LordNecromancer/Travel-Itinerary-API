@@ -183,7 +183,10 @@ console.log(data);
 
     async writeDoc(docId: string, body: any) {
       const accessToken = await this.getAccessToken()
-      const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/itineraries/${docId}`
+      let url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/itineraries/${docId}`
+       const fieldsToUpdate = Object.keys(body);
+       const updateMask = fieldsToUpdate.map(f => `updateMask.fieldPaths=${encodeURIComponent(f)}`).join('&');
+      url += `?${updateMask}`;
       await fetch(url, {
         method: 'PATCH',
         headers: {
@@ -246,14 +249,14 @@ async function updateFirestore(firestoreApiKey, jobId: string, update: {
   }
 
   // Merge: preserve destination, durationDays, createdAt
-  const merged = {
-    destination: existing.destination?.stringValue || null,
-    durationDays: existing.durationDays?.integerValue || null,
-    createdAt: existing.createdAt?.stringValue || null,
-    ...update
-  };
+  // const merged = {
+  //   destination: existing.destination?.stringValue || null,
+  //   durationDays: existing.durationDays?.integerValue || null,
+  //   createdAt: existing.createdAt?.stringValue || null,
+  //   ...update
+  // };
 
-  await firestore.writeDoc(jobId, merged);
+  await firestore.writeDoc(jobId, update);
 }
 
 async function getFirestoreDoc(firestoreApiKey, jobId: string) {
