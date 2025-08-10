@@ -1,16 +1,15 @@
 # 🌍 Travel Itinerary Generator API
 
-**Live Demo**: *[Add your deployed Cloudflare Pages/Workers link here]*  
-**Repository**: *[Add your GitHub repo link here]*
+**Live Cloudflare API**: https://travel-itinerary-api.mmdp313.workers.dev
+**Repository**: https://github.com/LordNecromancer/Travel-Itinerary-API
 
 ---
 
 ## 📌 Overview
 
-The **Travel Itinerary Generator API** is a serverless API built with [Hono](https://hono.dev) that creates **structured travel itineraries** using **OpenAI GPT-4o** or **Google Gemini** and stores them in **Google Firestore**.
+The **Travel Itinerary Generator API** is a serverless API built with [Hono](https://hono.dev) that creates **structured travel itineraries** using **OpenAI GPT-4o** and stores them in **Google Firestore**.
 
 It is designed with **asynchronous job processing** so you can submit a request, instantly receive a `jobId`, and then check back later to retrieve the generated itinerary.  
-Perfect for integrating into web apps, mobile apps, or other travel-related services.
 
 ---
 
@@ -20,7 +19,6 @@ Perfect for integrating into web apps, mobile apps, or other travel-related serv
 - ⚡ **Asynchronous Processing** — Uses `c.executionCtx.waitUntil` for non-blocking background tasks.
 - 💾 **Firestore Integration** — Store and retrieve job status + results.
 - 📥 **GET** `/job/:jobId` — Retrieve a job’s current status and formatted itinerary.
-- 🤖 **LLM Support** — Works with **OpenAI GPT-4o** and **Google Gemini**.
 - 🛠 **Partial Firestore Updates** — Updates only relevant fields without overwriting the full document.
 
 ---
@@ -30,11 +28,11 @@ Perfect for integrating into web apps, mobile apps, or other travel-related serv
 ### 1️⃣ Start a Job
 
 ```bash
-curl -X POST https://your-worker-url/ \
+curl -X POST https://travel-itinerary-api.mmdp313.workers.dev/ \
   -H "Content-Type: application/json" \
-  -d '{"destination": "Paris", "durationDays": 5}'
+  -d '{"destination": "Isfahan", "durationDays": 2}'
 ```
-Response:
+Sample Response:
 ```bash
 
 { "jobId": "123e4567-e89b-12d3-a456-426614174000" }
@@ -42,16 +40,20 @@ Response:
 2️⃣ Retrieve the Job Result
 ```bash
 
-curl https://your-worker-url/job/123e4567-e89b-12d3-a456-426614174000
+curl https://https://travel-itinerary-api.mmdp313.workers.dev/job/123e4567-e89b-12d3-a456-426614174000
 ```
-Response:
-```bash
+Sample Response:
 
-{
-  "status": "completed",
-  "itinerary": "Day 1 - Eiffel Tower visit..."
-}
-```
+Day 1 - Historical Exploration
+Morning: Visit Naqsh-e Jahan Square, a UNESCO World Heritage site featuring stunning architecture and historical significance. (Naqsh-e Jahan Square, Isfahan, Iran)
+Afternoon: Explore Sheikh Lotfollah Mosque, renowned for its exquisite tile work and intricate interior design. (Sheikh Lotfollah Mosque, Naqsh-e Jahan Square, Isfahan, Iran)
+Evening: Stroll across the Khaju Bridge, an architectural masterpiece providing beautiful views and a cultural atmosphere. (Khaju Bridge, Isfahan, Iran)
+
+Day 2 - Art and Culture
+Morning: Visit the Isfahan Music Museum to learn about traditional Persian instruments and music. (Isfahan Music Museum, Isfahan, Iran)
+Afternoon: Explore the Vank Cathedral, an Armenian church known for its unique architecture and vibrant frescoes. (Vank Cathedral, Jolfa district, Isfahan, Iran)
+Evening: Enjoy a relaxing walk and dinner along the Zayanderud River, experiencing local culture and cuisine. (Zayanderud Riverbank, Isfahan, Iran)
+
 🛠️ Running Locally
 🔄 Clone the Repository
 ```bash
@@ -65,18 +67,28 @@ cd travel-itinerary-api
 npm install
 ```
 ⚙️ Set Environment Variables
-Create a .dev.vars file in the same directory as source code
+Create a .dev.vars file in the same directory as source code with the two following keys:
 OPENAI_API_KEY='sk-xxxxx'
 FIREBASE_SERVICE_ACCOUNT={"type":"service_account",...}
 ▶️ Start the API
 
-npm run dev
+```bash
+npx wrangler dev
+```
+
+The worker is available at:
+
+```bash
+http://127.0.0.1:8787
+```
 📂 Folder Structure
 
 src/
-├── index.ts                # Hono server routes
+├── index.ts              
 ├── .dev.vars
+
 🧠 Technical Highlights
+
 Hono: Minimal, high-performance web framework for Cloudflare Workers.
 
 c.executionCtx.waitUntil: Runs long tasks without delaying HTTP responses.
@@ -92,6 +104,5 @@ Capability	Status
 Async job handling	✅
 Firestore integration	✅
 Partial updates	✅
-Ready for Cloudflare Workers	✅
 API endpoints documented	✅
 
