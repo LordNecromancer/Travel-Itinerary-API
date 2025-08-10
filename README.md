@@ -1,6 +1,7 @@
 # 🌍 Travel Itinerary Generator API
 
 **Live Cloudflare API**: https://travel-itinerary-api.mmdp313.workers.dev
+
 **Repository**: https://github.com/LordNecromancer/Travel-Itinerary-API
 
 ---
@@ -45,13 +46,19 @@ curl https://https://travel-itinerary-api.mmdp313.workers.dev/job/123e4567-e89b-
 Sample Response:
 
 Day 1 - Historical Exploration
+
 Morning: Visit Naqsh-e Jahan Square, a UNESCO World Heritage site featuring stunning architecture and historical significance. (Naqsh-e Jahan Square, Isfahan, Iran)
+
 Afternoon: Explore Sheikh Lotfollah Mosque, renowned for its exquisite tile work and intricate interior design. (Sheikh Lotfollah Mosque, Naqsh-e Jahan Square, Isfahan, Iran)
+
 Evening: Stroll across the Khaju Bridge, an architectural masterpiece providing beautiful views and a cultural atmosphere. (Khaju Bridge, Isfahan, Iran)
 
 Day 2 - Art and Culture
+
 Morning: Visit the Isfahan Music Museum to learn about traditional Persian instruments and music. (Isfahan Music Museum, Isfahan, Iran)
+
 Afternoon: Explore the Vank Cathedral, an Armenian church known for its unique architecture and vibrant frescoes. (Vank Cathedral, Jolfa district, Isfahan, Iran)
+
 Evening: Enjoy a relaxing walk and dinner along the Zayanderud River, experiencing local culture and cuisine. (Zayanderud Riverbank, Isfahan, Iran)
 
 🛠️ Running Locally
@@ -68,8 +75,10 @@ npm install
 ```
 ⚙️ Set Environment Variables
 Create a .dev.vars file in the same directory as source code with the two following keys:
+```bash
 OPENAI_API_KEY='sk-xxxxx'
 FIREBASE_SERVICE_ACCOUNT={"type":"service_account",...}
+```
 ▶️ Start the API
 
 ```bash
@@ -78,12 +87,33 @@ npx wrangler dev
 
 The worker is available at:
 
-```bash
+```
 http://127.0.0.1:8787
 ```
+
+☁️ Deploying to Production
+
+Make sure you’re logged in to Cloudflare:
+
+```bash
+npx wrangler login
+```
+
+Deploy the Worker:
+
+```bash
+npx wrangler deploy
+```
+You’ll get a live URL like:
+
+```
+https://travel-itinerary-api.your-account.workers.dev
+```
+
 📂 Folder Structure
 
 src/
+
 ├── index.ts              
 ├── .dev.vars
 
@@ -99,10 +129,5 @@ Multi-LLM Support: Easily switch between OpenAI and Gemini APIs.
 
 Structured JSON Output: Enforced prompt schema for consistent results.
 
-✅ Completed Capabilities
-Capability	Status
-Async job handling	✅
-Firestore integration	✅
-Partial updates	✅
-API endpoints documented	✅
+
 
