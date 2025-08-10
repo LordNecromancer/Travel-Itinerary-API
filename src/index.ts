@@ -7,12 +7,11 @@ import { sign } from 'hono/jwt'
 // === APP SETUP ===
 const app = new Hono()
 
+
 type RequestBody = {
   destination: string
   durationDays: number
 }
-
-
 
 app.post('/', async (c) => {
   const body: RequestBody = await c.req.json()
@@ -20,12 +19,9 @@ app.post('/', async (c) => {
   const LLMApiKey=c.env.OPENAI_API_KEY
   const firestoreApiKey=c.env.FIREBASE_SERVICE_ACCOUNT
 
-
   try{
-    console.log(c)
   await setInitialFirestoreDoc(firestoreApiKey, jobId, body.destination, body.durationDays)
 
-  //handleAsyncJob(LLMApiKey,firestoreApiKey, jobId, body.destination, body.durationDays)
   c.executionCtx.waitUntil(
       handleAsyncJob(LLMApiKey, firestoreApiKey, jobId, body.destination, body.durationDays)
     );
@@ -33,6 +29,20 @@ app.post('/', async (c) => {
   return c.json({ jobId }, 202)
   } catch (err) {
     return c.json({ error: err.message || 'Internal Server Error' }, 500);
+  }
+})
+app.get('/job/:jobId', async (c) => {
+  const jobId = c.req.param('jobId')
+  const firestoreApiKey = c.env.FIREBASE_SERVICE_ACCOUNT
+
+  try {
+    const doc = await getFirestoreDoc(firestoreApiKey, jobId)
+    if (!doc) {
+      return c.json({ error: 'Job not found' }, 404)
+    }
+    return c.json(doc)
+  } catch (err) {
+    return c.json({ error: err.message || 'Internal Server Error' }, 500)
   }
 })
 
@@ -150,7 +160,6 @@ function getFirestore(firestoreApiKey) {
   console.log("HHey")
 
   const projectId = key.project_id
-  const tokenUrl = `https://oauth2.googleapis.com/token`
 
   return {
     async getAccessToken() {
@@ -174,7 +183,7 @@ console.log(data);
 
     async writeDoc(docId: string, body: any) {
       const accessToken = await this.getAccessToken()
-      const url = `https://firestore.googleapis.com/v1/projects/travel-itinerary-ab63a/databases/(default)/documents/itineraries/${docId}`
+      const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/itineraries/${docId}`
       await fetch(url, {
         method: 'PATCH',
         headers: {
@@ -191,6 +200,17 @@ console.log(data);
       }
 })
     },
+    async readDoc(docId: string) {
+      const accessToken = await this.getAccessToken()
+      const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/itineraries/${docId}`
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      })
+
+      if (res.status === 404) return null
+      const data = await res.json()
+      return formatItineraryForUser(data.fields)
+    }
   }
 }
 
@@ -218,6 +238,11 @@ async function updateFirestore(firestoreApiKey, jobId: string, update: {
 }) {
   const firestore = getFirestore(firestoreApiKey)
   await firestore.writeDoc(jobId, update)
+}
+
+async function getFirestoreDoc(firestoreApiKey, jobId: string) {
+  const firestore = getFirestore(firestoreApiKey)
+  return await firestore.readDoc(jobId)
 }
 
 // === FIRESTORE AUTH HELPERS ===
@@ -312,4 +337,30 @@ function toFirestoreValue(value: any): any {
   if (Array.isArray(value)) return { arrayValue: { values: value.map(toFirestoreValue) } };
   if (typeof value === 'object') return { mapValue: { fields: toFirestoreFields(value) } };
   throw new Error('Unsupported Firestore value type');
+}
+
+function formatItineraryForUser(fields: any): string | null {
+  if (!fields || !fields.itinerary) return null;
+
+  const itinerary = (fields.itinerary.arrayValue?.values || []).map(dayObj => {
+    const dayFields = dayObj.mapValue.fields;
+    return {
+      day: Number(dayFields.day?.integerValue || 0),
+      theme: dayFields.theme?.stringValue || "",
+      activities: (dayFields.activities?.arrayValue?.values || []).map(act => {
+        const actFields = act.mapValue.fields;
+        return {
+          time: actFields.time?.stringValue || "",
+          description: actFields.description?.stringValue || "",
+          location: actFields.location?.stringValue || ""
+        };
+      })
+    };
+  });
+
+  // Turn into readable string
+  return itinerary.map(day =>
+    `Day ${day.day} - ${day.theme}\n` +
+    day.activities.map(a => `  ${a.time}: ${a.description} (${a.location})`).join("\n")
+  ).join("\n\n");
 }
