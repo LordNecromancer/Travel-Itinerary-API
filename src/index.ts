@@ -209,7 +209,7 @@ console.log(data);
 
       if (res.status === 404) return null
       const data = await res.json()
-      return formatItineraryForUser(data.fields)
+      return data.fields
     }
   }
 }
@@ -236,13 +236,30 @@ async function updateFirestore(firestoreApiKey, jobId: string, update: {
   itinerary: any[],
   error: string | null,
 }) {
-  const firestore = getFirestore(firestoreApiKey)
-  await firestore.writeDoc(jobId, update)
+  const firestore = getFirestore(firestoreApiKey);
+
+  // Read the existing document
+  const existing = await firestore.readDoc(jobId);
+  if (!existing) {
+    console.error(`Document with jobId ${jobId} not found.`);
+    return;
+  }
+
+  // Merge: preserve destination, durationDays, createdAt
+  const merged = {
+    destination: existing.destination?.stringValue || null,
+    durationDays: existing.durationDays?.integerValue || null,
+    createdAt: existing.createdAt?.stringValue || null,
+    ...update
+  };
+
+  await firestore.writeDoc(jobId, merged);
 }
 
 async function getFirestoreDoc(firestoreApiKey, jobId: string) {
   const firestore = getFirestore(firestoreApiKey)
-  return await firestore.readDoc(jobId)
+  const fields = await firestore.readDoc(jobId)
+  return formatItineraryForUser(fields)
 }
 
 // === FIRESTORE AUTH HELPERS ===
