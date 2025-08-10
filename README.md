@@ -35,12 +35,10 @@ curl -X POST https://travel-itinerary-api.mmdp313.workers.dev/ \
 ```
 Sample Response:
 ```bash
-
 { "jobId": "123e4567-e89b-12d3-a456-426614174000" }
 ```
-2️⃣ Retrieve the Job Result
+### 2️⃣ Retrieve the Job Result
 ```bash
-
 curl https://https://travel-itinerary-api.mmdp313.workers.dev/job/123e4567-e89b-12d3-a456-426614174000
 ```
 Sample Response:
@@ -61,40 +59,42 @@ Afternoon: Explore the Vank Cathedral, an Armenian church known for its unique a
 
 Evening: Enjoy a relaxing walk and dinner along the Zayanderud River, experiencing local culture and cuisine. (Zayanderud Riverbank, Isfahan, Iran)
 
-🛠️ Running Locally
-🔄 Clone the Repository
+---
+
+## 🛠️ Running Locally
+### 🔄 Clone the Repository
 ```bash
 
 git clone https://github.com/yourusername/travel-itinerary-api.git
 cd travel-itinerary-api
 ```
-📦 Install Dependencies
-```bash
 
+### 📦 Install Dependencies
+```bash
 npm install
 ```
-⚙️ Set Environment Variables
+
+### ⚙️ Set Environment Variables
 Create a .dev.vars file in the same directory as source code with the two following keys:
 ```bash
 OPENAI_API_KEY='sk-xxxxx'
 FIREBASE_SERVICE_ACCOUNT={"type":"service_account",...}
 ```
-▶️ Start the API
 
+### ▶️ Start the API
 ```bash
 npx wrangler dev
 ```
 
 The worker is available at:
-
 ```
 http://127.0.0.1:8787
 ```
+---
 
-☁️ Deploying to Production
+## ☁️ Deploying to Production
 
 Make sure you’re logged in to Cloudflare:
-
 ```bash
 npx wrangler login
 ```
@@ -104,20 +104,23 @@ Deploy the Worker:
 ```bash
 npx wrangler deploy
 ```
-You’ll get a live URL like:
 
+You’ll get a live URL like:
 ```
 https://travel-itinerary-api.your-account.workers.dev
 ```
+---
 
-📂 Folder Structure
+## 📂 Folder Structure
 
 src/
 
 ├── index.ts              
 ├── .dev.vars
 
-🧠 Technical Highlights
+---
+
+## 🧠 Technical Highlights
 
 Hono: Minimal, high-performance web framework for Cloudflare Workers.
 
