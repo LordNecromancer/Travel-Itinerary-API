@@ -78,7 +78,7 @@ The `/job/:jobId` endpoint returns the itinerary in structured JSON format:
 ### 🔄 Clone the Repository
 ```bash
 
-git clone https://github.com/yourusername/travel-itinerary-api.git
+git clone https://github.com/lordnecromancer/travel-itinerary-api.git
 cd travel-itinerary-api
 ```
 
