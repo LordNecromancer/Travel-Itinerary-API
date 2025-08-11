@@ -21,6 +21,8 @@ It is designed with **asynchronous job processing** so you can submit a request,
 - 💾 **Firestore Integration** — Store and retrieve job status + results.
 - 📥 **GET** `/job/:jobId` — Retrieve a job’s current status and formatted itinerary.
 - 🛠 **Partial Firestore Updates** — Updates only relevant fields without overwriting the full document.
+- 🔄 **Exponential Retry for LLM Calls** — Automatically retries contacting the LLM with exponential backoff to handle transient failures.
+
 
 ---
 
@@ -41,23 +43,34 @@ Sample Response:
 ```bash
 curl https://https://travel-itinerary-api.mmdp313.workers.dev/job/123e4567-e89b-12d3-a456-426614174000
 ```
-Sample Response:
+Sample Response
 
-Day 1 - Historical Exploration
+The `/job/:jobId` endpoint returns the itinerary in structured JSON format:
 
-Morning: Visit Naqsh-e Jahan Square, a UNESCO World Heritage site featuring stunning architecture and historical significance. (Naqsh-e Jahan Square, Isfahan, Iran)
-
-Afternoon: Explore Sheikh Lotfollah Mosque, renowned for its exquisite tile work and intricate interior design. (Sheikh Lotfollah Mosque, Naqsh-e Jahan Square, Isfahan, Iran)
-
-Evening: Stroll across the Khaju Bridge, an architectural masterpiece providing beautiful views and a cultural atmosphere. (Khaju Bridge, Isfahan, Iran)
-
-Day 2 - Art and Culture
-
-Morning: Visit the Isfahan Music Museum to learn about traditional Persian instruments and music. (Isfahan Music Museum, Isfahan, Iran)
-
-Afternoon: Explore the Vank Cathedral, an Armenian church known for its unique architecture and vibrant frescoes. (Vank Cathedral, Jolfa district, Isfahan, Iran)
-
-Evening: Enjoy a relaxing walk and dinner along the Zayanderud River, experiencing local culture and cuisine. (Zayanderud Riverbank, Isfahan, Iran)
+```json
+[
+    {
+        "day": 1,
+        "theme": "Historical and Cultural Exploration",
+        "activities": [
+            {
+                "time": "Morning",
+                "description": "Visit the stunning Naqsh-e Jahan Square, a UNESCO World Heritage site featuring magnificent architecture including the Shah Mosque.",
+                "location": "Naqsh-e Jahan Square"
+            },
+            {
+                "time": "Afternoon",
+                "description": "Explore the historic Chehel Sotoun Palace, known for its Persian garden and beautiful wall paintings that tell stories of the Safavid era.",
+                "location": "Chehel Sotoun Palace"
+            },
+            {
+                "time": "Evening",
+                "description": "Enjoy a leisurely stroll along the historic Khaju Bridge, known for its beautiful arches and vibrant evening atmosphere.",
+                "location": "Khaju Bridge"
+            }
+        ]
+    }
+]
 
 ---
 
@@ -113,10 +126,23 @@ https://travel-itinerary-api.your-account.workers.dev
 
 ## 📂 Folder Structure
 
-src/
-
-├── index.ts              
+travel-itinerary-api/
+│
 ├── .dev.vars
+├── wrangler.toml
+├── package.json
+├── tsconfig.json
+│
+└── src/
+    ├── index.ts
+    │
+    ├── services/
+    │   ├── firestoreService.ts
+    │   └── itineraryService.ts
+    │
+    └── utils/
+        ├── jwtUtils.ts
+        └── firestoreFormatters.ts
 
 ---
 
