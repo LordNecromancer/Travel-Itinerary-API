@@ -71,7 +71,7 @@ The `/job/:jobId` endpoint returns the itinerary in structured JSON format:
         ]
     }
 ]
-
+```
 ---
 
 ## 🛠️ Running Locally
@@ -88,7 +88,7 @@ npm install
 ```
 
 ### ⚙️ Set Environment Variables
-Create a .dev.vars file in the same directory as source code with the two following keys:
+Create a .dev.vars file in the parent directory with the two following keys:
 ```bash
 OPENAI_API_KEY='sk-xxxxx'
 FIREBASE_SERVICE_ACCOUNT={"type":"service_account",...}
@@ -126,7 +126,7 @@ https://travel-itinerary-api.your-account.workers.dev
 
 ## 📂 Folder Structure
 
-travel-itinerary-api/
+```
 │
 ├── .dev.vars
 ├── wrangler.toml
@@ -143,6 +143,8 @@ travel-itinerary-api/
     └── utils/
         ├── jwtUtils.ts
         └── firestoreFormatters.ts
+```
+
 
 ---
 
