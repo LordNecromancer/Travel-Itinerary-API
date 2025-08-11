@@ -156,7 +156,7 @@ c.executionCtx.waitUntil: Runs long tasks without delaying HTTP responses.
 
 Firestore Partial Updates: Uses updateMask to add new fields without overwriting existing ones.
 
-Multi-LLM Support: Easily switch between OpenAI and Gemini APIs.
+Retry mechanism to call LLM multiple times with exponential delay if the previous calls fail.
 
 Structured JSON Output: Enforced prompt schema for consistent results.
 
