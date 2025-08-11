@@ -33,7 +33,7 @@ It is designed with **asynchronous job processing** so you can submit a request,
 ```bash
 curl -X POST https://travel-itinerary-api.mmdp313.workers.dev/ \
   -H "Content-Type: application/json" \
-  -d '{"destination": "Isfahan", "durationDays": 2}'
+  -d '{"destination": "Isfahan", "durationDays": 1}'
 ```
 Sample Response:
 ```bash
